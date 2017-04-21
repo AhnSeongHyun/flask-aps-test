@@ -15,16 +15,14 @@ class Config(object):
 
     SCHEDULER_API_ENABLED = True
 
-def job1(a, b):
-    print(str(datetime.now()) + ' ' + str(a) + ' ' + str(b))
-
 
 if __name__ == '__main__':
     app = Flask(__name__)
     app.config.from_object(Config())
 
-    def tick():
-        print str(datetime.now()) + ' - tick'
+    def tick(*args):
+        print 'args : ' + str(args) + "\t"+ str(datetime.now()) + ' - tick'
+
 
     scheduler = APScheduler()
     scheduler.init_app(app)
@@ -34,7 +32,10 @@ if __name__ == '__main__':
     @app.route("/register/<string:job_name>")
     def register(job_name):
         try:
-            app.scheduler.add_job(id=job_name, func=tick, trigger='date', run_date=datetime.now() + timedelta(seconds=30))
+            app.scheduler.add_job(id=job_name,
+                                  func=tick, trigger='date',
+                                  args=['param1', 'param2'],
+                                  run_date=datetime.now() + timedelta(seconds=10))
             print app.scheduler.get_jobs()
             return "register : " + job_name
         except:
@@ -48,6 +49,16 @@ if __name__ == '__main__':
             app.scheduler.delete_job(job_name)
             print app.scheduler.get_jobs()
             return "remove : " + job_name
+        except:
+            import traceback
+            print traceback.format_exc()
+
+
+    @app.route("/status")
+    def status():
+        try:
+            print app.scheduler.get_jobs()
+            return str(app.scheduler.get_jobs())
         except:
             import traceback
             print traceback.format_exc()
